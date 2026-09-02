@@ -3,50 +3,44 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Diet Survey & Interactive Plate</title>
+    <title>Interactive Meal Plate Split</title>
     <!-- Load Chart.js for the visual circle -->
     <script src="https://jsdelivr.net"></script>
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #f5f7fb; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
-        .container { max-width: 600px; width: 100%; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 20px; text-align: center; box-sizing: border-box; }
-        h1 { color: #111827; margin-bottom: 10px; font-size: 24px; }
-        p { color: #4b5563; line-height: 1.5; font-size: 15px; }
-        .chart-box { max-width: 320px; margin: 20px auto; position: relative; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #f5f7fb; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 90vh; }
+        .container { max-width: 500px; width: 100%; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); text-align: center; box-sizing: border-box; }
+        h1 { color: #111827; margin-bottom: 10px; font-size: 22px; }
+        p { color: #4b5563; line-height: 1.5; font-size: 14px; margin-bottom: 20px; }
+        .chart-box { max-width: 280px; margin: 0 auto 20px auto; }
         
         /* Sliders / Toggles Styling */
-        .controls { margin-top: 25px; text-align: left; background: #f9fafb; padding: 20px; border-radius: 8px; border: 1px solid #e5e7eb; }
-        .control-group { margin-bottom: 15px; }
+        .controls { margin-top: 20px; text-align: left; background: #f9fafb; padding: 15px; border-radius: 8px; border: 1px solid #e5e7eb; }
+        .control-group { margin-bottom: 12px; }
         .control-group:last-child { margin-bottom: 0; }
-        .control-label { display: flex; justify-content: space-between; font-weight: 600; margin-bottom: 5px; font-size: 14px; }
+        .control-label { display: flex; justify-content: space-between; font-weight: 600; margin-bottom: 4px; font-size: 13px; }
         .slider { width: 100%; height: 8px; border-radius: 5px; appearance: none; background: #e5e7eb; outline: none; }
         .slider::-webkit-slider-thumb { appearance: none; width: 18px; height: 18px; border-radius: 50%; cursor: pointer; }
         
-        /* Specific slider thumb colors matching the chart */
         #slider-veg::-webkit-slider-thumb { background: #22c55e; }
         #slider-protein::-webkit-slider-thumb { background: #ef4444; }
         #slider-carbs::-webkit-slider-thumb { background: #eab308; }
 
-        .btn { background-color: #0078d4; color: white; border: none; padding: 14px 28px; font-size: 16px; font-weight: 600; border-radius: 6px; cursor: pointer; transition: background 0.2s; margin-top: 25px; width: 100%; }
-        .btn:hover { background-color: #005a9e; }
+        .btn { background-color: #10b981; color: white; border: none; padding: 14px 28px; font-size: 16px; font-weight: 600; border-radius: 6px; cursor: pointer; transition: background 0.2s; margin-top: 20px; width: 100%; }
+        .btn:hover { background-color: #059669; }
         .copied-msg { color: #16a34a; font-weight: bold; margin-top: 12px; display: none; font-size: 14px; }
-        
-        .form-container { max-width: 600px; width: 100%; margin-top: 10px; }
-        iframe { width: 100%; height: 800px; border: none; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .instructions { font-size: 12px; color: #6b7280; margin-top: 15px; border-top: 1px dashed #d1d5db; padding-top: 10px; }
     </style>
 </head>
 <body>
 
-    <!-- STEP 1: THE INTERACTIVE CIRCLE & SLIDERS -->
     <div class="container">
         <h1>Your Daily Meal Plate Split</h1>
-        <p>Use the toggles at the bottom to adjust the plate. Match it to what your typical daily meals look like!</p>
+        <p>Adjust the toggles below to match what your typical daily meals look like.</p>
         
-        <!-- The Interactive Circle -->
         <div class="chart-box">
             <canvas id="mealChart"></canvas>
         </div>
 
-        <!-- The Interactive Sliders at the bottom -->
         <div class="controls">
             <div class="control-group">
                 <div class="control-label" style="color: #15803d;">
@@ -73,24 +67,17 @@
             </div>
         </div>
 
-        <button class="btn" onclick="copyData()">1. Click to Copy Your Custom Percentages</button>
-        <div id="copiedNotice" class="copied-msg">✓ Percentages copied! Scroll down and paste them into the form below.</div>
-    </div>
-
-    <!-- STEP 2: YOUR MICROSOFT FORM -->
-    <div class="form-container">
-        <p style="text-align: center; font-weight: bold; color: #4b5563; margin-bottom: 15px;">2. Paste your data in the survey below:</p>
-        <!-- REPLACE THE URL IN THE src="" BELOW WITH YOUR ACTUAL MS FORMS EMBED URL -->
-        <iframe src="https://office.com" title="Microsoft Form"></iframe>
+        <button class="btn" onclick="copyData()">Copy My Percentages</button>
+        <div id="copiedNotice" class="copied-msg">✓ Copied! Switch back to your survey tab and paste it.</div>
+        
+        <p class="instructions">After copying, you can close this window and resume your survey.</p>
     </div>
 
     <script>
-        // Setup state variables
         let veg = 34;
         let protein = 33;
         let carbs = 33;
 
-        // Initialize Chart.js
         const ctx = document.getElementById('mealChart').getContext('2d');
         const mealChart = new Chart(ctx, {
             type: 'pie',
@@ -98,39 +85,32 @@
                 labels: ['Fruit & Veg', 'Protein', 'Carbs'],
                 datasets: [{
                     data: [veg, protein, carbs],
-                    backgroundColor: ['#22c55e', '#ef4444', '#eab308'], // Green, Red, Yellow
+                    backgroundColor: ['#22c55e', '#ef4444', '#eab308'],
                     borderWidth: 2
                 }]
             },
             options: {
                 responsive: true,
-                plugins: {
-                    legend: { display: false } // Hidden because sliders serve as an explicit visual legend
-                }
+                plugins: { legend: { display: false } }
             }
         });
 
-        // DOM elements for sliders and labels
         const sVeg = document.getElementById('slider-veg');
         const sProtein = document.getElementById('slider-protein');
         const sCarbs = document.getElementById('slider-carbs');
-
         const lVeg = document.getElementById('val-veg');
         const lProtein = document.getElementById('val-protein');
         const lCarbs = document.getElementById('val-carbs');
 
-        // Logic to dynamically normalize inputs so they always equal 100% total
         function updateValues(changedSlider) {
             veg = parseInt(sVeg.value);
             protein = parseInt(sProtein.value);
             carbs = parseInt(sCarbs.value);
-
             let total = veg + protein + carbs;
 
             if (total !== 100) {
                 let remainder = 100 - total;
                 if (changedSlider === 'veg') {
-                    // Split the remainder between protein and carbs proportionately
                     let sideTotal = protein + carbs || 1;
                     protein += Math.round(remainder * (protein / sideTotal));
                     carbs = 100 - veg - protein;
@@ -143,24 +123,15 @@
                     veg += Math.round(remainder * (veg / sideTotal));
                     protein = 100 - carbs - veg;
                 }
-                
-                // Keep values within boundaries safely
                 veg = Math.max(0, Math.min(100, veg));
                 protein = Math.max(0, Math.min(100, protein));
                 carbs = Math.max(0, Math.min(100, carbs));
-
-                // Sync sliders back
-                sVeg.value = veg;
-                sProtein.value = protein;
-                sCarbs.value = carbs;
+                sVeg.value = veg; sProtein.value = protein; sCarbs.value = carbs;
             }
 
-            // Update text labels
             lVeg.textContent = veg + '%';
             lProtein.textContent = protein + '%';
             lCarbs.textContent = carbs + '%';
-
-            // Refresh chart display
             mealChart.data.datasets[0].data = [veg, protein, carbs];
             mealChart.update();
         }
@@ -169,7 +140,6 @@
         sProtein.addEventListener('input', () => updateValues('protein'));
         sCarbs.addEventListener('input', () => updateValues('carbs'));
 
-        // Function to copy formatted output text to the user's clipboard
         function copyData() {
             const dataString = `Fruit & Veg: ${veg}%, Protein: ${protein}%, Carbs: ${carbs}%`;
             navigator.clipboard.writeText(dataString).then(() => {
@@ -182,3 +152,4 @@
 
 </body>
 </html>
+
