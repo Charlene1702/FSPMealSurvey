@@ -156,20 +156,53 @@
     margin-top: 4px;
   }
 
-  .reset-btn {
+  .btn-row {
+    display: flex;
+    gap: 10px;
+    margin-top: 8px;
+    flex-wrap: wrap;
+  }
+
+  .reset-btn, .copy-btn {
     font-family: 'Helvetica Neue', Arial, sans-serif;
     font-size: 0.85rem;
-    background: none;
-    border: 1px solid var(--line);
-    color: var(--ink);
     padding: 9px 16px;
     border-radius: 6px;
     cursor: pointer;
-    margin-top: 8px;
+  }
+
+  .reset-btn {
+    background: none;
+    border: 1px solid var(--line);
+    color: var(--ink);
   }
 
   .reset-btn:hover {
     border-color: var(--ink);
+  }
+
+  .copy-btn {
+    background: var(--ink);
+    border: 1px solid var(--ink);
+    color: var(--paper);
+    font-weight: 600;
+  }
+
+  .copy-btn:hover {
+    opacity: 0.85;
+  }
+
+  .copy-btn.copied {
+    background: var(--veg);
+    border-color: var(--veg);
+  }
+
+  .copy-hint {
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    font-size: 0.78rem;
+    color: #8A897F;
+    margin-top: 10px;
+    line-height: 1.5;
   }
 
   @media (max-width: 560px) {
@@ -218,7 +251,11 @@
       </div>
 
       <p class="legend-note">Moving one slider adjusts the other two proportionally, so the plate always totals 100%.</p>
-      <button class="reset-btn" id="resetBtn">Reset to equal thirds</button>
+      <div class="btn-row">
+        <button class="reset-btn" id="resetBtn">Reset to equal thirds</button>
+        <button class="copy-btn" id="copyBtn">Copy my results</button>
+      </div>
+      <p class="copy-hint" id="copyHint">Click "Copy my results," then switch back to the survey tab and paste it into the answer box.</p>
     </div>
   </div>
 </div>
@@ -340,6 +377,35 @@
   document.getElementById('resetBtn').addEventListener('click', () => {
     values = { carbs: 33, protein: 33, veg: 34 };
     render();
+  });
+
+  const copyBtn = document.getElementById('copyBtn');
+  copyBtn.addEventListener('click', () => {
+    const text = `Carbs: ${values.carbs}%, Protein: ${values.protein}%, Fruits & Vegetables: ${values.veg}%`;
+    const fallbackCopy = () => {
+      const temp = document.createElement('textarea');
+      temp.value = text;
+      temp.style.position = 'fixed';
+      temp.style.opacity = '0';
+      document.body.appendChild(temp);
+      temp.focus();
+      temp.select();
+      try { document.execCommand('copy'); } catch (e) {}
+      document.body.removeChild(temp);
+    };
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).catch(fallbackCopy);
+    } else {
+      fallbackCopy();
+    }
+
+    copyBtn.textContent = 'Copied!';
+    copyBtn.classList.add('copied');
+    setTimeout(() => {
+      copyBtn.textContent = 'Copy my results';
+      copyBtn.classList.remove('copied');
+    }, 1800);
   });
 
   render();
