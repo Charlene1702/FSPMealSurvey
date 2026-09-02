@@ -37,10 +37,12 @@
         <h1>Your Daily Meal Plate Split</h1>
         <p>Adjust the toggles below to match what your typical daily meals look like.</p>
         
+        <!-- The Interactive Circle -->
         <div class="chart-box">
             <canvas id="mealChart"></canvas>
         </div>
 
+        <!-- The Interactive Sliders -->
         <div class="controls">
             <div class="control-group">
                 <div class="control-label" style="color: #15803d;">
@@ -74,74 +76,95 @@
     </div>
 
     <script>
-        let veg = 34;
-        let protein = 33;
-        let carbs = 33;
+        // Set initial starting distribution
+        let values = { veg: 34, protein: 33, carbs: 33 };
 
+        // Initialize Chart.js configuration
         const ctx = document.getElementById('mealChart').getContext('2d');
         const mealChart = new Chart(ctx, {
             type: 'pie',
             data: {
                 labels: ['Fruit & Veg', 'Protein', 'Carbs'],
                 datasets: [{
-                    data: [veg, protein, carbs],
+                    data: [values.veg, values.protein, values.carbs],
                     backgroundColor: ['#22c55e', '#ef4444', '#eab308'],
                     borderWidth: 2
                 }]
             },
             options: {
                 responsive: true,
-                plugins: { legend: { display: false } }
+                plugins: { legend: { display: false } } // Sliders serve as legend
             }
         });
 
-        const sVeg = document.getElementById('slider-veg');
-        const sProtein = document.getElementById('slider-protein');
-        const sCarbs = document.getElementById('slider-carbs');
-        const lVeg = document.getElementById('val-veg');
-        const lProtein = document.getElementById('val-protein');
-        const lCarbs = document.getElementById('val-carbs');
+        // Track UI elements
+        const sliders = {
+            veg: document.getElementById('slider-veg'),
+            protein: document.getElementById('slider-protein'),
+            carbs: document.getElementById('slider-carbs')
+        };
 
-        function updateValues(changedSlider) {
-            veg = parseInt(sVeg.value);
-            protein = parseInt(sProtein.value);
-            carbs = parseInt(sCarbs.value);
-            let total = veg + protein + carbs;
+        const labels = {
+            veg: document.getElementById('val-veg'),
+            protein: document.getElementById('val-protein'),
+            carbs: document.getElementById('val-carbs')
+        };
 
-            if (total !== 100) {
-                let remainder = 100 - total;
-                if (changedSlider === 'veg') {
-                    let sideTotal = protein + carbs || 1;
-                    protein += Math.round(remainder * (protein / sideTotal));
-                    carbs = 100 - veg - protein;
-                } else if (changedSlider === 'protein') {
-                    let sideTotal = veg + carbs || 1;
-                    veg += Math.round(remainder * (veg / sideTotal));
-                    carbs = 100 - protein - veg;
-                } else {
-                    let sideTotal = veg + protein || 1;
-                    veg += Math.round(remainder * (veg / sideTotal));
-                    protein = 100 - carbs - veg;
-                }
-                veg = Math.max(0, Math.min(100, veg));
-                protein = Math.max(0, Math.min(100, protein));
-                carbs = Math.max(0, Math.min(100, carbs));
-                sVeg.value = veg; sProtein.value = protein; sCarbs.value = carbs;
+        // Proportional balancing logic ensuring dynamic total matches 100% exactly
+        function balanceSliders(changedKey) {
+            let newValue = parseInt(sliders[changedKey].value);
+            let oldValuesSum = 0;
+            
+            // Get keys of sliders that WERE NOT shifted by the user
+            let otherKeys = Object.keys(values).filter(k => k !== changedKey);
+            otherKeys.forEach(k => oldValuesSum += values[k]);
+
+            values[changedKey] = newValue;
+            let remainder = 100 - newValue;
+
+            if (oldValuesSum > 0) {
+                // Adjust other sections proportionally relative to their previous sizes
+                let targetFirstKey = otherKeys[0];
+                let targetSecondKey = otherKeys[1];
+                
+                values[targetFirstKey] = Math.round(remainder * (values[targetFirstKey] / oldValuesSum));
+                values[targetSecondKey] = 100 - values[changedKey] - values[targetFirstKey];
+            } else {
+                // Handle edge case fallback if other sliders were completely at 0
+                let equalSplit = Math.floor(remainder / 2);
+                values[otherKeys[0]] = equalSplit;
+                values[otherKeys[1]] = remainder - equalSplit;
             }
 
-            lVeg.textContent = veg + '%';
-            lProtein.textContent = protein + '%';
-            lCarbs.textContent = carbs + '%';
-            mealChart.data.datasets[0].data = [veg, protein, carbs];
+            // Boundary validation check (no negative slices allowed)
+            Object.keys(values).forEach(k => {
+                if (values[k] < 0) {
+                    values[k] = 0;
+                    // Recalculate remaining parameters safely
+                    let activeOthers = Object.keys(values).filter(key => key !== k && key !== changedKey);
+                    values[activeOthers[0]] = 100 - values[changedKey];
+                }
+            });
+
+            // Synchronize positions of tracking sliders and text blocks
+            Object.keys(values).forEach(k => {
+                sliders[k].value = values[k];
+                labels[k].textContent = values[k] + '%';
+            });
+
+            // Trigger pie chart visual updates
+            mealChart.data.datasets[0].data = [values.veg, values.protein, values.carbs];
             mealChart.update();
         }
 
-        sVeg.addEventListener('input', () => updateValues('veg'));
-        sProtein.addEventListener('input', () => updateValues('protein'));
-        sCarbs.addEventListener('input', () => updateValues('carbs'));
+        // Connect input listeners to balancing function
+        sliders.veg.addEventListener('input', () => balanceSliders('veg'));
+        sliders.protein.addEventListener('input', () => balanceSliders('protein'));
+        sliders.carbs.addEventListener('input', () => balanceSliders('carbs'));
 
+        // Output string format function
         function copyData() {
-            const dataString = `Fruit & Veg: ${veg}%, Protein: ${protein}%, Carbs: ${carbs}%`;
+            const dataString = `Fruit & Veg: ${values.veg}%, Protein: ${values.protein}%, Carbs: ${values.carbs}%`;
             navigator.clipboard.writeText(dataString).then(() => {
                 const notice = document.getElementById('copiedNotice');
                 notice.style.display = 'block';
