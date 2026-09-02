@@ -1,171 +1,349 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Interactive Meal Plate Split</title>
-    <!-- Load Chart.js safely from official CDN -->
-    <script src="https://jsdelivr.net"></script>
-    <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #f5f7fb; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 90vh; }
-        .container { max-width: 500px; width: 100%; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); text-align: center; box-sizing: border-box; }
-        h1 { color: #111827; margin-bottom: 10px; font-size: 22px; }
-        p { color: #4b5563; line-height: 1.5; font-size: 14px; margin-bottom: 20px; }
-        .chart-box { max-width: 280px; margin: 0 auto 20px auto; }
-        
-        /* Sliders / Toggles Styling */
-        .controls { margin-top: 20px; text-align: left; background: #f9fafb; padding: 15px; border-radius: 8px; border: 1px solid #e5e7eb; }
-        .control-group { margin-bottom: 12px; }
-        .control-group:last-child { margin-bottom: 0; }
-        .control-label { display: flex; justify-content: space-between; font-weight: 600; margin-bottom: 4px; font-size: 13px; }
-        .slider { width: 100%; height: 8px; border-radius: 5px; appearance: none; background: #e5e7eb; outline: none; }
-        .slider::-webkit-slider-thumb { appearance: none; width: 18px; height: 18px; border-radius: 50%; cursor: pointer; }
-        
-        #slider-veg::-webkit-slider-thumb { background: #22c55e; }
-        #slider-protein::-webkit-slider-thumb { background: #ef4444; }
-        #slider-carbs::-webkit-slider-thumb { background: #eab308; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Build Your Ideal Plate</title>
+<style>
+  :root {
+    --carbs: #E8A33D;
+    --protein: #C1442D;
+    --veg: #4C7A3D;
+    --bg: #FAF7F0;
+    --ink: #2B2A26;
+    --paper: #FFFFFF;
+    --line: #E4DFD3;
+  }
 
-        .btn { background-color: #10b981; color: white; border: none; padding: 14px 28px; font-size: 16px; font-weight: 600; border-radius: 6px; cursor: pointer; transition: background 0.2s; margin-top: 20px; width: 100%; }
-        .btn:hover { background-color: #059669; }
-        .copied-msg { color: #16a34a; font-weight: bold; margin-top: 12px; display: none; font-size: 14px; }
-        .instructions { font-size: 12px; color: #6b7280; margin-top: 15px; border-top: 1px dashed #d1d5db; padding-top: 10px; }
-    </style>
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Georgia', 'Iowan Old Style', serif;
+    display: flex;
+    justify-content: center;
+    padding: 48px 20px;
+  }
+
+  .wrap {
+    width: 100%;
+    max-width: 760px;
+  }
+
+  h1 {
+    font-size: 1.7rem;
+    font-weight: 400;
+    margin: 0 0 6px;
+    letter-spacing: 0.2px;
+  }
+
+  p.sub {
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    font-size: 0.95rem;
+    color: #6B6A63;
+    margin: 0 0 36px;
+    max-width: 46ch;
+    line-height: 1.5;
+  }
+
+  .layout {
+    display: flex;
+    gap: 48px;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .plate-area {
+    flex: 0 0 auto;
+    text-align: center;
+  }
+
+  .plate-total {
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    font-size: 0.8rem;
+    color: #8A897F;
+    margin-top: 14px;
+    letter-spacing: 0.3px;
+  }
+
+  .plate-total strong {
+    color: var(--ink);
+    font-weight: 600;
+  }
+
+  .controls {
+    flex: 1 1 320px;
+    min-width: 280px;
+  }
+
+  .row {
+    margin-bottom: 26px;
+  }
+
+  .row-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 8px;
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+  }
+
+  .row-label {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    font-size: 0.98rem;
+    font-weight: 600;
+  }
+
+  .swatch {
+    width: 12px;
+    height: 12px;
+    border-radius: 3px;
+    display: inline-block;
+  }
+
+  .row-value {
+    font-size: 1.05rem;
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+  }
+
+  input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 6px;
+    border-radius: 4px;
+    background: var(--line);
+    outline: none;
+  }
+
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--paper);
+    border: 3px solid var(--thumb-color, var(--ink));
+    cursor: pointer;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  }
+
+  input[type="range"]::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--paper);
+    border: 3px solid var(--thumb-color, var(--ink));
+    cursor: pointer;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  }
+
+  #carbsSlider { --thumb-color: var(--carbs); }
+  #proteinSlider { --thumb-color: var(--protein); }
+  #vegSlider { --thumb-color: var(--veg); }
+
+  .legend-note {
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    font-size: 0.82rem;
+    color: #8A897F;
+    line-height: 1.5;
+    margin-top: 4px;
+  }
+
+  .reset-btn {
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    font-size: 0.85rem;
+    background: none;
+    border: 1px solid var(--line);
+    color: var(--ink);
+    padding: 9px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    margin-top: 8px;
+  }
+
+  .reset-btn:hover {
+    border-color: var(--ink);
+  }
+
+  @media (max-width: 560px) {
+    .layout { flex-direction: column; }
+  }
+</style>
 </head>
 <body>
+<div class="wrap">
+  <h1>Build your ideal plate</h1>
+  <p class="sub">Adjust the sliders to show what proportion of carbohydrates, protein, and fruits &amp; vegetables you think makes up a healthy plate. The three will always add up to 100%.</p>
 
-    <div class="container">
-        <h1>Your Daily Meal Plate Split</h1>
-        <p>Adjust the toggles below to match what your typical daily meals look like.</p>
-        
-        <!-- The Interactive Circle -->
-        <div class="chart-box">
-            <canvas id="mealChart"></canvas>
-        </div>
-
-        <!-- The Interactive Sliders -->
-        <div class="controls">
-            <div class="control-group">
-                <div class="control-label" style="color: #15803d;">
-                    <span>Fruit & Veg</span>
-                    <span id="val-veg">34%</span>
-                </div>
-                <input type="range" id="slider-veg" class="slider" min="0" max="100" value="34">
-            </div>
-
-            <div class="control-group">
-                <div class="control-label" style="color: #b91c1c;">
-                    <span>Protein</span>
-                    <span id="val-protein">33%</span>
-                </div>
-                <input type="range" id="slider-protein" class="slider" min="0" max="100" value="33">
-            </div>
-
-            <div class="control-group">
-                <div class="control-label" style="color: #a16207;">
-                    <span>Carbs</span>
-                    <span id="val-carbs">33%</span>
-                </div>
-                <input type="range" id="slider-carbs" class="slider" min="0" max="100" value="33">
-            </div>
-        </div>
-
-        <button class="btn" onclick="copyData()">Copy My Percentages</button>
-        <div id="copiedNotice" class="copied-msg">✓ Copied! Switch back to your survey tab and paste it.</div>
-        
-        <p class="instructions">After copying, you can close this window and resume your survey.</p>
+  <div class="layout">
+    <div class="plate-area">
+      <svg id="plateSvg" width="260" height="260" viewBox="0 0 260 260">
+        <circle cx="130" cy="130" r="118" fill="none" stroke="#D8D3C4" stroke-width="1.5"/>
+        <g id="wedges" transform="rotate(-90 130 130)"></g>
+        <circle cx="130" cy="130" r="118" fill="none" stroke="#8A897F" stroke-width="2"/>
+      </svg>
+      <div class="plate-total">Total: <strong id="totalReadout">100%</strong></div>
     </div>
 
-    <script>
-        // Set initial starting distribution values
-        let values = { veg: 34, protein: 33, carbs: 33 };
+    <div class="controls">
+      <div class="row">
+        <div class="row-head">
+          <span class="row-label"><span class="swatch" style="background:var(--carbs)"></span>Carbohydrates</span>
+          <span class="row-value" id="carbsValue">33%</span>
+        </div>
+        <input type="range" id="carbsSlider" min="0" max="100" value="33">
+      </div>
 
-        // Initialize Chart.js configuration correctly mapping to index 0 element
-        const ctx = document.getElementById('mealChart').getContext('2d');
-        const mealChart = new Chart(ctx, {
-            type: 'pie',
-            data: {
-                labels: ['Fruit & Veg', 'Protein', 'Carbs'],
-                datasets: [{
-                    data: [values.veg, values.protein, values.carbs],
-                    backgroundColor: ['#22c55e', '#ef4444', '#eab308'],
-                    borderWidth: 2
-                }]
-            },
-            options: {
-                responsive: true,
-                plugins: { legend: { display: false } }
-            }
-        });
+      <div class="row">
+        <div class="row-head">
+          <span class="row-label"><span class="swatch" style="background:var(--protein)"></span>Protein</span>
+          <span class="row-value" id="proteinValue">33%</span>
+        </div>
+        <input type="range" id="proteinSlider" min="0" max="100" value="33">
+      </div>
 
-        // Track UI slider inputs
-        const sliders = {
-            veg: document.getElementById('slider-veg'),
-            protein: document.getElementById('slider-protein'),
-            carbs: document.getElementById('slider-carbs')
-        };
+      <div class="row">
+        <div class="row-head">
+          <span class="row-label"><span class="swatch" style="background:var(--veg)"></span>Fruits &amp; vegetables</span>
+          <span class="row-value" id="vegValue">34%</span>
+        </div>
+        <input type="range" id="vegSlider" min="0" max="100" value="34">
+      </div>
 
-        // Track UI percentage text blocks
-        const labels = {
-            veg: document.getElementById('val-veg'),
-            protein: document.getElementById('val-protein'),
-            carbs: document.getElementById('val-carbs')
-        };
+      <p class="legend-note">Moving one slider adjusts the other two proportionally, so the plate always totals 100%.</p>
+      <button class="reset-btn" id="resetBtn">Reset to equal thirds</button>
+    </div>
+  </div>
+</div>
 
-        // Proportional balancing logic ensuring dynamic total matches 100% exactly
-        function balanceSliders(changedKey) {
-            let newValue = parseInt(sliders[changedKey].value);
-            values[changedKey] = newValue;
+<script>
+(function() {
+  const sliders = {
+    carbs: document.getElementById('carbsSlider'),
+    protein: document.getElementById('proteinSlider'),
+    veg: document.getElementById('vegSlider')
+  };
+  const valueLabels = {
+    carbs: document.getElementById('carbsValue'),
+    protein: document.getElementById('proteinValue'),
+    veg: document.getElementById('vegValue')
+  };
+  const colors = {
+    carbs: '#E8A33D',
+    protein: '#C1442D',
+    veg: '#4C7A3D'
+  };
+  const wedgesGroup = document.getElementById('wedges');
+  const totalReadout = document.getElementById('totalReadout');
 
-            let otherKeys = Object.keys(values).filter(k => k !== changedKey);
-            let targetFirstKey = otherKeys[0];
-            let targetSecondKey = otherKeys[1];
+  let values = { carbs: 33, protein: 33, veg: 34 };
 
-            let remainder = 100 - newValue;
-            let currentOthersSum = values[targetFirstKey] + values[targetSecondKey];
+  function polarToCartesian(cx, cy, r, angleDeg) {
+    const rad = (angleDeg * Math.PI) / 180;
+    return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
+  }
 
-            if (currentOthersSum > 0) {
-                // Distribute remainder proportionally between the other two slices
-                values[targetFirstKey] = Math.round(remainder * (values[targetFirstKey] / currentOthersSum));
-                values[targetSecondKey] = remainder - values[targetFirstKey];
-            } else {
-                // If both were zero, split evenly
-                let half = Math.floor(remainder / 2);
-                values[targetFirstKey] = half;
-                values[targetSecondKey] = remainder - half;
-            }
+  function describeWedge(cx, cy, r, startAngle, endAngle) {
+    if (endAngle - startAngle >= 359.999) {
+      // full circle
+      return `M ${cx - r},${cy} a ${r},${r} 0 1,0 ${2*r},0 a ${r},${r} 0 1,0 ${-2*r},0 Z`;
+    }
+    const start = polarToCartesian(cx, cy, r, startAngle);
+    const end = polarToCartesian(cx, cy, r, endAngle);
+    const largeArcFlag = endAngle - startAngle <= 180 ? 0 : 1;
+    return `M ${cx},${cy} L ${start.x},${start.y} A ${r},${r} 0 ${largeArcFlag} 1 ${end.x},${end.y} Z`;
+  }
 
-            // Guard rails to make sure no calculations drop below 0% or above 100%
-            Object.keys(values).forEach(k => {
-                if (values[k] < 0) values[k] = 0;
-                if (values[k] > 100) values[k] = 100;
-            });
+  function render() {
+    const cx = 130, cy = 130, r = 118;
+    let angle = 0;
+    wedgesGroup.innerHTML = '';
+    const order = ['carbs', 'protein', 'veg'];
+    order.forEach(key => {
+      const pct = values[key];
+      const sweep = (pct / 100) * 360;
+      if (pct > 0) {
+        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        path.setAttribute('d', describeWedge(cx, cy, r, angle, angle + sweep));
+        path.setAttribute('fill', colors[key]);
+        path.setAttribute('stroke', '#FAF7F0');
+        path.setAttribute('stroke-width', '2');
+        wedgesGroup.appendChild(path);
+      }
+      angle += sweep;
+    });
 
-            // Re-sync labels and inputs across everything 
-            Object.keys(values).forEach(k => {
-                sliders[k].value = values[k];
-                labels[k].textContent = values[k] + '%';
-            });
+    valueLabels.carbs.textContent = values.carbs + '%';
+    valueLabels.protein.textContent = values.protein + '%';
+    valueLabels.veg.textContent = values.veg + '%';
+    sliders.carbs.value = values.carbs;
+    sliders.protein.value = values.protein;
+    sliders.veg.value = values.veg;
 
-            // Update Chart.js datasets structure correctly using indexed references
-            mealChart.data.datasets[0].data = [values.veg, values.protein, values.carbs];
-            mealChart.update();
+    const total = values.carbs + values.protein + values.veg;
+    totalReadout.textContent = total + '%';
+  }
+
+  function adjustOthers(changedKey, newValue) {
+    newValue = Math.max(0, Math.min(100, Math.round(newValue)));
+    const otherKeys = Object.keys(values).filter(k => k !== changedKey);
+    const oldOtherSum = otherKeys.reduce((s, k) => s + values[k], 0);
+    const remaining = 100 - newValue;
+
+    values[changedKey] = newValue;
+
+    if (oldOtherSum === 0) {
+      // split remaining evenly
+      const half = Math.floor(remaining / 2);
+      values[otherKeys[0]] = half;
+      values[otherKeys[1]] = remaining - half;
+    } else {
+      // scale others proportionally to fit remaining
+      let runningSum = 0;
+      otherKeys.forEach((k, idx) => {
+        if (idx === otherKeys.length - 1) {
+          values[k] = remaining - runningSum;
+        } else {
+          const scaled = Math.round((values[k] / oldOtherSum) * remaining);
+          values[k] = scaled;
+          runningSum += scaled;
         }
+      });
+    }
 
-        // Attach standard events to track updates smoothly
-        sliders.veg.addEventListener('input', () => balanceSliders('veg'));
-        sliders.protein.addEventListener('input', () => balanceSliders('protein'));
-        sliders.carbs.addEventListener('input', () => balanceSliders('carbs'));
+    // Safety clamp: ensure no negative values, redistribute if needed
+    otherKeys.forEach(k => {
+      if (values[k] < 0) values[k] = 0;
+    });
+    const finalTotal = values.carbs + values.protein + values.veg;
+    if (finalTotal !== 100) {
+      const diff = 100 - finalTotal;
+      // apply diff to the largest of the "other" keys to fix rounding drift
+      const largestOther = otherKeys.reduce((a, b) => values[a] > values[b] ? a : b);
+      values[largestOther] += diff;
+    }
 
-        // Format clipboard output string
-        function copyData() {
-            const dataString = `Fruit & Veg: ${values.veg}%, Protein: ${values.protein}%, Carbs: ${values.carbs}%`;
-            navigator.clipboard.writeText(dataString).then(() => {
-                const notice = document.getElementById('copiedNotice');
-                notice.style.display = 'block';
-                setTimeout(() => { notice.style.display = 'none'; }, 4000);
-            });
-        }
-    </script>
+    render();
+  }
 
+  sliders.carbs.addEventListener('input', e => adjustOthers('carbs', +e.target.value));
+  sliders.protein.addEventListener('input', e => adjustOthers('protein', +e.target.value));
+  sliders.veg.addEventListener('input', e => adjustOthers('veg', +e.target.value));
+
+  document.getElementById('resetBtn').addEventListener('click', () => {
+    values = { carbs: 33, protein: 33, veg: 34 };
+    render();
+  });
+
+  render();
+})();
+</script>
 </body>
 </html>
