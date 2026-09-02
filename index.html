@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Interactive Meal Plate Split</title>
-    <!-- Load Chart.js for the visual circle -->
+    <!-- Load Chart.js safely from official CDN -->
     <script src="https://jsdelivr.net"></script>
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #f5f7fb; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 90vh; }
@@ -76,10 +76,10 @@
     </div>
 
     <script>
-        // Set initial starting distribution
+        // Set initial starting distribution values
         let values = { veg: 34, protein: 33, carbs: 33 };
 
-        // Initialize Chart.js configuration
+        // Initialize Chart.js configuration correctly mapping to index 0 element
         const ctx = document.getElementById('mealChart').getContext('2d');
         const mealChart = new Chart(ctx, {
             type: 'pie',
@@ -93,17 +93,18 @@
             },
             options: {
                 responsive: true,
-                plugins: { legend: { display: false } } // Sliders serve as legend
+                plugins: { legend: { display: false } }
             }
         });
 
-        // Track UI elements
+        // Track UI slider inputs
         const sliders = {
             veg: document.getElementById('slider-veg'),
             protein: document.getElementById('slider-protein'),
             carbs: document.getElementById('slider-carbs')
         };
 
+        // Track UI percentage text blocks
         const labels = {
             veg: document.getElementById('val-veg'),
             protein: document.getElementById('val-protein'),
@@ -113,56 +114,49 @@
         // Proportional balancing logic ensuring dynamic total matches 100% exactly
         function balanceSliders(changedKey) {
             let newValue = parseInt(sliders[changedKey].value);
-            let oldValuesSum = 0;
-            
-            // Get keys of sliders that WERE NOT shifted by the user
-            let otherKeys = Object.keys(values).filter(k => k !== changedKey);
-            otherKeys.forEach(k => oldValuesSum += values[k]);
-
             values[changedKey] = newValue;
-            let remainder = 100 - newValue;
 
-            if (oldValuesSum > 0) {
-                // Adjust other sections proportionally relative to their previous sizes
-                let targetFirstKey = otherKeys[0];
-                let targetSecondKey = otherKeys[1];
-                
-                values[targetFirstKey] = Math.round(remainder * (values[targetFirstKey] / oldValuesSum));
-                values[targetSecondKey] = 100 - values[changedKey] - values[targetFirstKey];
+            let otherKeys = Object.keys(values).filter(k => k !== changedKey);
+            let targetFirstKey = otherKeys[0];
+            let targetSecondKey = otherKeys[1];
+
+            let remainder = 100 - newValue;
+            let currentOthersSum = values[targetFirstKey] + values[targetSecondKey];
+
+            if (currentOthersSum > 0) {
+                // Distribute remainder proportionally between the other two slices
+                values[targetFirstKey] = Math.round(remainder * (values[targetFirstKey] / currentOthersSum));
+                values[targetSecondKey] = remainder - values[targetFirstKey];
             } else {
-                // Handle edge case fallback if other sliders were completely at 0
-                let equalSplit = Math.floor(remainder / 2);
-                values[otherKeys[0]] = equalSplit;
-                values[otherKeys[1]] = remainder - equalSplit;
+                // If both were zero, split evenly
+                let half = Math.floor(remainder / 2);
+                values[targetFirstKey] = half;
+                values[targetSecondKey] = remainder - half;
             }
 
-            // Boundary validation check (no negative slices allowed)
+            // Guard rails to make sure no calculations drop below 0% or above 100%
             Object.keys(values).forEach(k => {
-                if (values[k] < 0) {
-                    values[k] = 0;
-                    // Recalculate remaining parameters safely
-                    let activeOthers = Object.keys(values).filter(key => key !== k && key !== changedKey);
-                    values[activeOthers[0]] = 100 - values[changedKey];
-                }
+                if (values[k] < 0) values[k] = 0;
+                if (values[k] > 100) values[k] = 100;
             });
 
-            // Synchronize positions of tracking sliders and text blocks
+            // Re-sync labels and inputs across everything 
             Object.keys(values).forEach(k => {
                 sliders[k].value = values[k];
                 labels[k].textContent = values[k] + '%';
             });
 
-            // Trigger pie chart visual updates
+            // Update Chart.js datasets structure correctly using indexed references
             mealChart.data.datasets[0].data = [values.veg, values.protein, values.carbs];
             mealChart.update();
         }
 
-        // Connect input listeners to balancing function
+        // Attach standard events to track updates smoothly
         sliders.veg.addEventListener('input', () => balanceSliders('veg'));
         sliders.protein.addEventListener('input', () => balanceSliders('protein'));
         sliders.carbs.addEventListener('input', () => balanceSliders('carbs'));
 
-        // Output string format function
+        // Format clipboard output string
         function copyData() {
             const dataString = `Fruit & Veg: ${values.veg}%, Protein: ${values.protein}%, Carbs: ${values.carbs}%`;
             navigator.clipboard.writeText(dataString).then(() => {
@@ -175,4 +169,3 @@
 
 </body>
 </html>
-
